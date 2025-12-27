@@ -5,9 +5,7 @@ from docx import Document
 from docx.oxml import OxmlElement
 from lxml import etree
 import latex2mathml.converter
-from docx.oxml import OxmlElement, parse_xml  # 增加 parse_xml
-
-# --- 核心配置 ---
+from docx.oxml import OxmlElement, parse_xml
 
 # 获取当前脚本所在目录，确保离线 XSL 文件能被找到
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -34,13 +32,14 @@ def latex_to_omml(latex_str):
         return omml_tree.getroot()
         
     except Exception as e:
-        # 这里修改：打印具体的公式内容和错误类型，方便排查
+        #打印具体的公式内容和错误类型，方便排查
         print(f"  [DEBUG] 公式内容: {latex_str}")
         print(f"  [DEBUG] 错误详情: {type(e).__name__} - {e}")
         return None
 
 def replace_latex_in_paragraph(paragraph):
     text = paragraph.text
+    # 匹配 $...$ 或 $$...$$
     pattern = r'(\$\$.*?\$\$|\$.*?\$)'
     parts = re.split(pattern, text)
     
@@ -52,27 +51,48 @@ def replace_latex_in_paragraph(paragraph):
     for part in parts:
         if not part: continue
             
-        if (part.startswith('$') and part.endswith('$')):
+        if part.startswith('$') and part.endswith('$'):
+            # 1. 预处理清理
             clean_latex = part.strip('$').strip()
-            
             if not clean_latex:
                 paragraph.add_run(part)
                 continue
+
+            # --- 2. 增强型预处理：解决 DoubleSuperscriptsError 和 积分方块问题 ---
             
+            # (1) 处理连续撇号，防止解析器将其视为连续上标
+            if "'''" in clean_latex:
+                clean_latex = clean_latex.replace("'''", "^{\prime\prime\prime}")
+            elif "''" in clean_latex:
+                clean_latex = clean_latex.replace("''", "^{\prime\prime}")
+            elif "'" in clean_latex:
+                # 仅针对函数导数形式的单撇号处理
+                clean_latex = re.sub(r"(?<=[a-zA-Z\)])'", r"^{\prime}", clean_latex)
+
+            # (2) 修复微积分方块：确保积分号后有显式容器
+            # 匹配 \int_{a}^{b} 或 \int_a^b 后的内容，并尝试用 {} 包裹
+            if '\\int' in clean_latex:
+                # 寻找积分限之后的被积函数位置，并用 {} 包裹剩余部分
+                int_match = re.search(r'(\\int[_^0-9a-zA-Z{}]*)', clean_latex)
+                if int_match:
+                    prefix = int_match.group(0)
+                    body = clean_latex[int_match.end():].strip()
+                    if body and not body.startswith('{'):
+                        clean_latex = f"{prefix} {{{body}}}"
+
+            # --- 3. 执行转换 ---
             omml_element = latex_to_omml(clean_latex)
             
             if omml_element == "XSL_MISSING":
                 paragraph.add_run(part)
             elif omml_element is not None:
-                # 关键修正点：使用 etree 导出字符串，再用 parse_xml 导入
                 xml_str = etree.tostring(omml_element, encoding='unicode')
                 try:
-                    # 使用 docx.oxml 提供的 parse_xml 函数
                     paragraph._element.append(parse_xml(xml_str))
-                except Exception as e:
-                    print(f"插入公式失败: {e}")
+                except Exception:
                     paragraph.add_run(part)
             else:
+                # 如果转换依然失败，尝试最原始的 LaTeX 插入
                 paragraph.add_run(part)
         else:
             paragraph.add_run(part)
