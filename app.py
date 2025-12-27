@@ -105,12 +105,21 @@ else:
         if input_text:
             st.markdown(input_text)
             
-            with st.expander("查看转换后的 Word XML 代码 (供调试)"):
-                test_match = re.search(r'\$(.*?)\$', input_text)
-                if test_match:
-                    res = latex_to_omml(test_match.group(1))
-                    if res is not None and res != "XSL_MISSING":
-                        st.code(etree.tostring(res, encoding='unicode', pretty_print=True), language='xml')
+            with st.expander("查看转换后的 Word XML 代码 (所有公式)"):
+                all_formulas = re.findall(r'\$(.*?)\$', input_text)
+                
+                if all_formulas:
+                    for i, formula in enumerate(all_formulas):
+                        st.write(f"**公式 {i+1}**: `{formula}`")
+                        res = latex_to_omml(formula)
+                        if res is not None and res != "XSL_MISSING":
+                            # 将结果转为漂亮的 XML 代码块
+                            xml_code = etree.tostring(res, encoding='unicode', pretty_print=True)
+                            st.code(xml_code, language='xml')
+                        else:
+                            st.warning(f"公式 {i+1} 转换失败，请检查语法。")
+                else:
+                    st.info("未在文本中检测到由 $ 包裹的公式。")
         else:
             st.gray("等待输入...")
 
