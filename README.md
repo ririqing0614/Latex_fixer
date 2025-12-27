@@ -1,6 +1,7 @@
 # Latex_fixer
 
 这是一个基于 Python 的自动化工具，旨在解决 Word 文档中 LaTeX 源码（如 `$formula$`）无法正常显示的问题。它能将文档中的 LaTeX 代码批量转换为 Word 原生的 **Office Math (OMML)** 公式，使其可编辑且排版美观。
+[快捷使用网址](https://latexfixer-jmpecgdxtbjqkxmylf5eje.streamlit.app)
 
 ## 🌟 功能特性
 
@@ -48,3 +49,6 @@ python latex_change.py
 ## 📄 许可证
 
 本项目采用 MIT 许可证。
+
+## 免责声明
+说明本工具仅用于学术用途，且不存储用户上传的任何数据。
