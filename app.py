@@ -27,9 +27,14 @@ def latex_to_omml(latex_str):
         mathml = latex2mathml.converter.convert(latex_str)
         if not os.path.exists(XSL_PATH): return "XSL_MISSING"
         
+        safe_parser = etree.XMLParser(resolve_entities=False, no_network=True)
+
         xslt = etree.parse(XSL_PATH)
         transform = etree.XSLT(xslt)
-        return transform(etree.fromstring(mathml)).getroot()
+
+        mathml_tree = etree.fromstring(mathml, parser=safe_parser)
+
+        return transform(mathml_tree).getroot()
     except Exception:
         return None
 
