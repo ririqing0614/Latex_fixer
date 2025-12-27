@@ -121,7 +121,7 @@ else:
                 else:
                     st.info("未在文本中检测到由 $ 包裹的公式。")
         else:
-            st.gray("等待输入...")
+            st.write("等待输入...")
 
 st.sidebar.markdown("---")
 st.sidebar.caption("Powered by Streamlit | ririqing0614")
