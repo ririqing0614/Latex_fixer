@@ -25,9 +25,9 @@ pip install python-docx latex2mathml lxml
    - *注：该文件通常可在 Office 安装目录（如 `C:\Program Files\Microsoft Office\root\Office16\`）中找到。*
 
 2. **执行脚本**：
-   ```bash
-   python latex_change.py
-   ```
+```bash
+python latex_change.py
+```
 3. **输入路径**：
 
 * 根据提示输入需要处理的 `.docx` 文件完整路径。
